@@ -9,7 +9,12 @@
   "keywords": [
     "dead-man-switch"
   ],
-  "author": "Daniel Subiabre <hello@subiabre.xyz>",
+  "homepage": "https://github.com/subiabre/onnon",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/subiabre/onnon.git"
+  },
+  "author": "Daniel Subiabre (https://subiabre.xyz)",
   "license": "MIT",
   "dependencies": {
     "typescript": "^4.7.3"
