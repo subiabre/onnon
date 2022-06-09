@@ -1,50 +1,70 @@
+import { Command } from "./Command";
+
 /**
- * An Onnon instance describes a flow of Switch elements that can interrupt the execution of a Command element
+ * An Onnon instance describes a flow of control steps that can interrupt the execution of further execution steps
  */
 export class Onnon
 {
     protected name: String;
 
-    protected todos: {type: String, name?: String, action: Function}[] = [];
+    protected steps: { type: String, command: Command }[];
 
-    constructor(name: String) {
+    constructor(name: String, steps: { type: String, command: Command }[] = []) {
         this.name = name;
+        this.steps = steps;
     }
 
     /**
-     * Add a break|continue point in the app
-     * @param options An object describing a break|continue point in the app life-cycle
-     * @returns Onnon
+     * Add an step in the app life-cycle
+     * @param step An element representing any execution step in the app life-cycle
+     * @returns {Onnon}
      */
-    fuse(options: {name?: String, action: () => Boolean|Promise<Boolean>}): Onnon
+    addStep(step: { type: String, command: Command }): Onnon
     {
-        this.todos.push({type: 'fuse', ...options});
+        this.steps = [...this.steps, step];
 
         return this;
     }
 
     /**
-     * Add an execution point in the app
-     * @param options An object describing an execution point in the app life-cycle
-     * @returns Onnon
+     * Add a break|continue execution step in the app
+     * @param test A Command resulting in a break|continue result in the app life-cycle
+     * @returns {Onnon}
      */
-    execute(options: {name?: String, action: (history: {type: String, name: String, action: Function}[]) => any}): Onnon
+    fuse(test: Command): Onnon
     {
-        this.todos.push({type: 'do', ...options});
-
-        return this;
+        return this.addStep({ type: 'test', command: test });
     }
 
     /**
-     * Executes the life-cycle of the app based on the `fuse` and `do` provideds
+     * Add an execution step in the app
+     * @param step A Command describing the outcome of the application
+     * @returns {Onnon}
+     */
+    exec(step: Command): Onnon
+    {
+        return this.addStep({ type: 'actn', command: step });
+    }
+
+    /**
+     * Executes the life-cycle of the app based on the provided steps
      */
     run(): void
     {
-        for (let index = 0; index < this.todos.length; index++) {
-            const todo = this.todos[index];
+        const _steps = async () => {
+            for (let index = 0; index < this.steps.length; index++) {
+                const step = this.steps[index];
+    
+                if (step.type === 'test') {
+                    let result = await step.command.action();
 
-            if (todo.type === 'fuse' && !todo.action()) break;
-            if (todo.type === 'do') todo.action([...this.todos.slice(0, index)]);
+                    if (!result) break;
+                };
+
+                await step.command.action();
+            }
         }
+        
+        _steps();
     }
 }
